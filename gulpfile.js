@@ -8,7 +8,7 @@ const webpackConfig = require('./webpack.config.js');
 const sass = require('gulp-sass')(require('sass'));
 const csso = require('gulp-csso');
 const rename = require('gulp-rename');
-
+const plumber = require('gulp-plumber');
 
 const PATHS = {
   PUG: 'src/pug/',
@@ -106,10 +106,18 @@ const jsWatcher = () => {
 
 const buildCSS = (file) => {
   return gulp.src(`${file.path}/${file.filename}.scss`)
-  .pipe(sass())
-  .pipe(csso())
-  .pipe(rename(`${file.filename}.min.css`))
-  .pipe(gulp.dest(`${PATHS.CSS_DIST}`))
+    .pipe(plumber({
+      errorHandler: function(err) {
+        console.log('\x1b[31m%s\x1b[0m', 'SCSS Error:');
+        console.log(err.message);
+        this.emit('end');
+      }
+    }))
+    .pipe(sass())
+    .pipe(csso())
+    .pipe(rename(`${file.filename}.min.css`))
+    .pipe(gulp.dest(`${PATHS.CSS_DIST}`))
+    .pipe(sync.stream());
 }
 
 const styles = (done) => {
